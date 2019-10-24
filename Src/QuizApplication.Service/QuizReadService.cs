@@ -27,6 +27,8 @@ namespace QuizApplication.Service
             return await WrapReadOnly(service => service.GetQuizById(id));
         }
 
+        public async Task<IEnumerable<QuizResponse>> GetQuizResponse(int quizId) => await WrapReadOnly(service => service.GetQuizResponseByQuizId(quizId));
+
         private async Task<T> WrapReadOnly<T>(Func<QuizInternalReadService, Task<T>> function)
         {
             using (var dbContext = _dbFactory.GetReadOnly())

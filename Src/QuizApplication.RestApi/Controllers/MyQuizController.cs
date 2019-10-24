@@ -25,6 +25,9 @@ namespace QuizApplication.RestApi.Controllers
         [HttpGet("[action]/{id}")]
         public async Task<Quiz> GetQuizById(int id) => await _quizReadService.GetQuizById(id);
 
+        [HttpGet("[action]/{quizId}")]
+        public async Task<IEnumerable<QuizResponse>> GetQuizResponse(int quizId) => await _quizReadService.GetQuizResponse(quizId);
+
         [HttpPost("[action]")]
         public async Task CreateQuiz([FromBody] Quiz quiz) => await _quizWriteService.CreateQuiz(quiz);
 

@@ -44,7 +44,7 @@ namespace QuizApplication.Database
 
             if (_transaction != null) { conn.Database.UseTransaction(_transaction); }
 
-            conn.ChangeTracker.AutoDetectChangesEnabled = false;
+            conn.ChangeTracker.AutoDetectChangesEnabled = true;
 
             return conn;
         }

@@ -61,6 +61,7 @@ namespace QuizRestApi
 
         private void InitializeDb(string connectionString)
         {
+            connectionString ??= "DataSource=:memory:";
             if (System.IO.File.Exists(connectionString.Replace("DataSource=", "", StringComparison.InvariantCultureIgnoreCase))) { return; }
 
             var connection = new SqliteConnection(connectionString);

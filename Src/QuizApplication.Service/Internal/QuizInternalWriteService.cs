@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using apiModels = QuizApplication.ApiContracts.Models;
@@ -27,6 +28,14 @@ namespace QuizApplication.Service.Internal
             var dbQuiz = new Quiz { Title = title };
 
             _dbContext.Quiz.Add(dbQuiz);
+
+            if (quiz.Questions?.Any() == true)
+            {
+                await _dbContext.SaveChangesAsync(); // we need quiz Id
+
+                foreach (var question in quiz.Questions) { await CreateQuestion(dbQuiz.Id, question); }
+            }
+
             await _dbContext.SaveChangesAsync();
         }
 
@@ -64,6 +73,19 @@ namespace QuizApplication.Service.Internal
             var dbQuestion = new Question { Text = questionText, QuizId = dbQuiz.Id, CorrectAnswerId = question.CorrectAnswer?.Id };
 
             _dbContext.Question.Add(dbQuestion);
+
+            if (question.AvailableAnswers?.Any() == true)
+            {
+                await _dbContext.SaveChangesAsync(); // we need question Id
+
+                foreach (var answer in question.AvailableAnswers) { await CreateAnswer(dbQuestion.Id, answer); }
+            }
+
+            if (question.CorrectAnswer != null)
+            {
+                throw new InvalidOperationException("you cannot create Question with correct answer when you dnt know the answer id");
+            }
+
             await _dbContext.SaveChangesAsync();
         }
 
@@ -74,10 +96,20 @@ namespace QuizApplication.Service.Internal
             var text = question.Text.TrimToNull();
             if (text == null) { throw new InvalidOperationException("Question With Empty Text cannot be updated!"); }
 
-            var dbQuestion = await _dbContext.Question.FirstOrDefaultAsync(q => q.Id == question.Id) ?? throw new InvalidOperationException("Wrong Question Id Provided.");
+            var dbQuestion = await _dbContext.Question.Include(i => i.Answer).FirstOrDefaultAsync(q => q.Id == question.Id) ?? throw new InvalidOperationException("Wrong Question Id Provided.");
 
             dbQuestion.Text = text;
             dbQuestion.CorrectAnswerId = question.CorrectAnswer?.Id;
+
+            if (question.AvailableAnswers?.Any() == true)
+            {
+                await _dbContext.SaveChangesAsync();
+
+                foreach (var answer in question.AvailableAnswers.Where(w => dbQuestion.Answer.All(a => a.Text != w.Text)).ToList())
+                {
+                    await CreateAnswer(dbQuestion.Id, answer);
+                }
+            }
 
             await _dbContext.SaveChangesAsync();
         }
@@ -129,12 +161,12 @@ namespace QuizApplication.Service.Internal
         {
             if (response == null) { throw new ArgumentNullException(nameof(response)); }
 
-            if (response.Quiz == null || response.Answer == null || response.Question == null)
+            if (response.Quiz == null || response.GivenAnswer == null || response.Question == null)
             {
                 throw new InvalidOperationException("Cannot create response with missing properties");
             }
 
-            var dbModel = new QuizResponse { QuizId = response.Quiz.Id, QuestionId = response.Question.Id, AnswerId = response.Answer.Id, UserId = response.UserId };
+            var dbModel = new QuizResponse { QuizId = response.Quiz.Id, QuestionId = response.Question.Id, AnswerId = response.GivenAnswer.Id, UserId = response.UserId };
 
             _dbContext.QuizResponse.Add(dbModel);
             await _dbContext.SaveChangesAsync();

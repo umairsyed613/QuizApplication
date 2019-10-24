@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
 using apiModels = QuizApplication.ApiContracts.Models;
 using dbModels = QuizApplication.Database.Models;
 
@@ -16,13 +13,17 @@ namespace QuizApplication.Service.Mappers
 
         public static apiModels.Question ToApiModel(dbModels.Question question)
         {
-            return question == null ? null : new apiModels.Question
-            {
-                Id = question.Id,
-                AvailableAnswers = question.Answer.Select(ToApiModel).ToList(),
-                CorrectAnswer = ToApiModel(question.Answer.First(f => question.CorrectAnswerId.HasValue && f.Id == question.CorrectAnswerId)),
-                Text = question.Text
-            };
+            if (question == null) { return null; }
+
+            var apiModelQuestion = new apiModels.Question { Id = question.Id, Text = question.Text };
+
+            if (!question.Answer.Any()) { return apiModelQuestion; }
+
+            apiModelQuestion.AvailableAnswers = question.Answer.Select(ToApiModel).ToList();
+            apiModelQuestion.CorrectAnswer = question.CorrectAnswerId.HasValue ?
+                ToApiModel(question.Answer.First(f => f.Id == question.CorrectAnswerId)) : null;
+
+            return apiModelQuestion;
         }
 
         public static apiModels.Answer ToApiModel(dbModels.Answer answer)

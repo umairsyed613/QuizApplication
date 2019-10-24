@@ -9,6 +9,7 @@ namespace QuizApplication.ApiContracts.Interfaces
         // read part of service
         Task<IEnumerable<Quiz>> GetAllQuiz();
         Task<Quiz> GetQuizById(int id);
+        Task<IEnumerable<QuizResponse>> GetQuizResponse(int quizId);
     }
 
     public interface IQuizWriteService
